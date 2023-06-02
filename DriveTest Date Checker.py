@@ -1,112 +1,123 @@
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
+import undetected_chromedriver as uc 
+import time 
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.action_chains import ActionChains
 
-license_number = input('Enter your driver\'s license number, exactly as it appears on your license: ')
-license_expiry_date = input('Enter your driver\'s license expiry date, exactly as it appears on your license: ')
+license_number = "" # input('Enter your driver\'s license number, exactly as it appears on your license: ')
+license_expiry_date = "" # input('Enter your driver\'s license expiry date, exactly as it appears on your license: ')
 
-locations = ['//*[@id="9556"]', '//*[@id="9557"]', '//*[@id="9559"]', '//*[@id="9567"]', '//*[@id="9597"]', '//*[@id="9574"]', '//*[@id="12448"]', '//*[@id="9552"]', '//*[@id="9580"]', '//*[@id="9581"]', '//*[@id="9596"]', '//*[@id="9602"]', '//*[@id="9565"]', '//*[@id="9579"]', '//*[@id="9592"]']
-location_number = 0
+options = uc.ChromeOptions() 
+#options.headless = True 
+driver = uc.Chrome(use_subprocess=True, options=options) 
+driver.delete_all_cookies()
+driver.get("https://drivetest.ca/dtbookingngapp/registration/confirmRegistration") 
+driver.maximize_window() 
 
-for location in locations:
-    location_number += 1
-    browser  = webdriver.Chrome(ChromeDriverManager().install())
 
-    # Go to the intial page
-    browser.get('https://drivetest.ca/book-a-road-test/booking.html#/verify-driver')
+# Wait for the page to load
+try:
+    wait = WebDriverWait(driver, 120).until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'Sign in')]")))
+except TimeoutException:
+    print ("Loading took too much time.")
 
-    # Enter the license number and expiry date
-    browser.find_element_by_name('licenceNumber').send_keys(license_number)
-    browser.find_element_by_name('licenceExpiryDate').send_keys(license_expiry_date)
 
-    # Advance to the next page
-    browser.find_element_by_id('regSubmitBtn').click();
+driver.find_element(By.XPATH, "//a[contains(text(),'Sign in')]").click()
 
-    # Wait for the page to load
-    try:
-        wait = WebDriverWait(browser, 120).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="booking-dashboard"]/div/div/div/div[2]/div/div[5]/p/a')))
-    except TimeoutException:
-        print ("Loading took too much time.")
+# Wait
+try:
+    wait = WebDriverWait(driver, 120).until(EC.element_to_be_clickable((By.XPATH, "/html/body/app-root/app-app-layout/div/div/mat-sidenav-container/mat-sidenav-content/main/app-registration-confirmation/div/div/form/div[4]/app-progress-button")))
+except TimeoutException:
+    print ("Loading took too much time.")
 
-    # Click the book a road test button
-    browser.find_element_by_xpath('//*[@id="booking-dashboard"]/div/div/div/div[2]/div/div[5]/p/a').click();
+driver.find_element("name",'driverLicenceNumber').send_keys(license_number)
+driver.find_element("id",'driverLicenceExpiry').send_keys(license_expiry_date)
 
-    # Wait for the page to load
-    try:
-        wait = WebDriverWait(browser, 120).until(EC.presence_of_element_located((By.XPATH, '//*[@id="lic_G2"]')))
-    except TimeoutException:
-        print ("Loading took too much time.")
-    
-    # Click the G2 button
-    browser.find_element_by_xpath('//*[@id="G2btn"]').click();
+time.sleep(1)
 
-    # Click the continue buttons
-    browser.find_element_by_xpath('//*[@id="booking-licence"]/div/form/div/div[4]/button').click();
+driver.find_element(By.XPATH,"/html/body/app-root/app-app-layout/div/div/mat-sidenav-container/mat-sidenav-content/main/app-registration-confirmation/div/div/form/div[4]/app-progress-button").click()
 
-    # Wait for the page to load
-    try:
-        wait = WebDriverWait(browser, 120).until(EC.presence_of_element_located((By.XPATH, '//*[@id="9607"]')))
-    except TimeoutException:
-        print ("Loading took too much time.")
+# Wait
+try:
+    wait = WebDriverWait(driver, 120).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="headingDiv"]/div[3]/div/div/div[2]/div[3]/ul/li[2]/button')))
+except TimeoutException:
+    print ("Loading took too much time.")
 
-    # Click on the location and view available dates
-    browser.find_element_by_xpath(location).click();
-    try:
-        wait = WebDriverWait(browser, 120).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="booking-location"]/div/div/form/div[2]/div[2]/button')))
-    except TimeoutException:
-        print ("Loading took too much time.")
-    browser.find_element_by_xpath('//*[@id="booking-location"]/div/div/form/div[2]/div[2]/button').click();
-    try:
-        wait = WebDriverWait(browser, 120).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="driver-info"]/div[1]/div[1]/div[1]/a[2]')))
-    except TimeoutException:
-        print ("Loading took too much time.")
 
-    # Go through every date in the availability calendar and see if it has an opening based on its CSS class
-    dates = ['//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td[3]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td[4]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td[5]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td[6]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td[7]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[1]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[2]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[3]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[4]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[5]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[6]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[7]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[7]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[1]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[2]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[3]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[4]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[5]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[6]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[7]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[1]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[2]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[3]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[4]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[5]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[6]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[7]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[6]/td[1]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[6]/td[2]/div/div/div/a']
-    available_dates = []
-    for i in dates:
-        date = browser.find_element_by_xpath(i)
-        availability = str(date.get_attribute("class"))
-        if availability != "date-link disabled" and availability != "date-link disabled todays-date" and availability != "date-link disabled selected":
-            available_dates.append(str(date.get_attribute("title")))
+driver.find_element(By.XPATH,'//*[@id="headingDiv"]/div[3]/div/div/div[2]/div[3]/ul/li[2]/button').click()
 
-    if location_number == 1:
-        print("Brampton:")
-    if location_number == 2:
-        print("Brantford:")
-    if location_number == 3:
-        print("Burlington:")
-    if location_number == 4:
-        print("Guelph:")
-    if location_number == 5:
-        print("Hamilton:")
-    if location_number == 6:
-        print("Kitchener:")
-    if location_number == 7:
-        print("Mississauga:")
-    if location_number == 8:
-        print("Newmarket:")
-    if location_number == 9:
-        print("Oakville:")
-    if location_number == 10:
-        print("Orangeville:")
-    if location_number == 11:
-        print("St Catharines:")
-    if location_number == 12:
-        print("Toronto Downsview:")
-    if location_number == 13:
-        print("Toronto Etobicoke:")
-    if location_number == 14:
-        print("Toronto Metro East:")
-    if location_number == 15:
-        print("Toronto Port Union:")
+# Wait
+try:
+    wait = WebDriverWait(driver, 120).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="mat-dialog-0"]/app-appt-modal/div[2]/div[2]/div[1]/app-progress-button/button/span[1]/span')))
+except TimeoutException:
+    print ("Loading took too much time.")
 
-    if not available_dates:
-        print("No available dates")
-    else:
-        for i in available_dates:
-            print(str(i))
+driver.find_element(By.XPATH,'//*[@id="mat-dialog-0"]/app-appt-modal/div[2]/div[2]/div[1]/app-progress-button/button/span[1]/span').click()
+
+
+# Wait
+try:
+    wait = WebDriverWait(driver, 120).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="main"]/app-drivetest-locations/div/div/div[5]/app-progress-button/button')))
+except TimeoutException:
+    print ("Loading took too much time.")
+
+driver.find_element(By.XPATH, '//*[@id="targetLoc34"]').click()
+driver.find_element(By.XPATH, '//*[@id="main"]/app-drivetest-locations/div/div/div[5]/app-progress-button/button').click()
+
+
+# Go through every date in the availability calendar and see if it has an opening based on its CSS class
+#dates = ['//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td[3]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td[4]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td[5]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td[6]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td[7]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[1]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[2]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[3]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[4]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[5]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[6]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[7]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td[7]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[1]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[2]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[3]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[4]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[5]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[6]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td[7]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[1]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[2]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[3]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[4]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[5]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[6]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[5]/td[7]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[6]/td[1]/div/div/div/a', '//*[@id="driver-info"]/div[1]/div[1]/div[2]/table/tbody/tr[6]/td[2]/div/div/div/a']
+# dates = ['//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[4]/div[5]/app-date-selection']
+
+dates = ['//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[5]/div[2]/app-date-selection/button',
+     '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[5]/div[3]/app-date-selection/button',
+     '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[5]/div[4]/app-date-selection/button',
+     '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[5]/div[5]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[5]/div[6]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[6]/div[2]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[6]/div[3]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[6]/div[4]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[6]/div[5]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[6]/div[6]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[7]/div[2]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[7]/div[3]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[7]/div[4]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[7]/div[5]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[7]/div[6]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[8]/div[2]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[8]/div[3]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[8]/div[4]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[8]/div[5]/app-date-selection/button',
+    '//*[@id="main"]/app-select-date/div/app-calendar-selection-container/div[8]/div[6]/app-date-selection/button'
+    ]
+
+
+
+print(len(dates))
+
+# time.sleep(1)
+# driver.find_element(By.XPATH,'/html/body/app-root/app-app-layout/div/div/mat-sidenav-container/mat-sidenav-content/main/app-select-date/div/app-calendar-selection-container/div[1]/button[2]/span[1]/mat-icon').click()
+# time.sleep(1)
+
+
+# available_dates = []
+# for i in dates:
+#     date = driver.find_element(By.XPATH,i)
+#     availability = str(date.get_attribute("class"))
+
+# #    print()
+# #    print(availability)
+# #    print()
+#     if "date-available" in availability:
+#         print("yuh")
+#         available_dates.append(str(date.get_attribute("title")))
+
+
+# for i in available_dates:
+#             print(str(i))
+
+while True:
+    pass
+
+driver.close()
